@@ -251,19 +251,19 @@ MUSEO MAJA- SALA 3
 							<h3 style="font-family: 'Times New Roman', Times, serif; font-style: italic; font-weight: bold;">¿Deseas hacer un comentario al artista?</h3>
 						</section>
 						<section>
-							<form method="post" action="https://mail.google.com/mail/?view=cm&fs=1&to=ardilamosquera@gmail.com&su=" onsubmit="this.action += encodeURIComponent(document.getElementById('subject').value) + '&body=' + encodeURIComponent('Name: ' + document.getElementById('name').value + '\n\nMessage: ' + document.getElementById('message').value); return true;"></form>
+							<form onsubmit="sendEmail(event)"></form>
 								<div class="fields">
 									<div class="field">
 										<label for="name">Name</label>
-										<input type="text" name="name" id="name" />
+										<input type="text" name="name" id="name" required />
 									</div>
 									<div class="field">
 										<label for="subject">Subject</label>
-										<input type="text" name="subject" id="subject" />
+										<input type="text" name="subject" id="subject" required />
 									</div>
 									<div class="field">
 										<label for="message">Message</label>
-										<textarea name="message" id="message" rows="3"></textarea>
+										<textarea name="message" id="message" rows="3" required></textarea>
 									</div>
 								</div>
 								<ul class="actions">
@@ -271,6 +271,25 @@ MUSEO MAJA- SALA 3
 								</ul>
 							</form>
 						</section>
+
+						<script>
+							function sendEmail(event) {
+								event.preventDefault(); // Evita que el formulario se envíe automáticamente
+
+								// Obtén los valores de los campos
+								const name = document.getElementById("name").value;
+								const subject = document.getElementById("subject").value;
+								const message = document.getElementById("message").value;
+
+								// Construye la URL para Gmail
+								const mailtoLink = `https://mail.google.com/mail/?view=cm&fs=1&to=ardilamosquera@gmail.com&su=${encodeURIComponent(
+									subject
+								)}&body=${encodeURIComponent(`Name: ${name}\n\nMessage: ${message}`)}`;
+
+								// Abre Gmail en una nueva pestaña
+								window.open(mailtoLink, "_blank");
+							}
+						</script>
 						<section class="split contact">
 							<section class="alt">
 								<h3>Dirección</h3>
