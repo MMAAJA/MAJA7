@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Programación de Conciertos</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #f4f4f4;
+      overflow-y: auto;
+    }
+    #pdf-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+    canvas {
+      margin: 10px 0;
+      max-width: 100%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="pdf-container"></div>
+
+  <!-- Se incluye PDF.js desde un CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <script>
+    // URL del PDF a mostrar
+    var url = 'https://museomaja.com/wp-content/uploads/2025/03/Talleres-Sede-Central-2024-2.pdf';
+
+    // Configuración de PDF.js
+    var pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js';
+
+    var container = document.getElementById('pdf-container');
+
+    // Cargar el documento PDF de forma asíncrona
+    var loadingTask = pdfjsLib.getDocument(url);
+    loadingTask.promise.then(function(pdf) {
+      // Para cada página del PDF
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        pdf.getPage(pageNumber).then(function(page) {
+          var scale = 1.5; // Ajusta el tamaño según necesites
+          var viewport = page.getViewport({ scale: scale });
+
+          // Crear un canvas para renderizar la página
+          var canvas = document.createElement('canvas');
+          var context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Agregar el canvas al contenedor
+          container.appendChild(canvas);
+
+          // Renderizar la página en el canvas
+          var renderContext = {
+            canvasContext: context,
+            viewport: viewport
+          };
+          page.render(renderContext);
+        });
+      }
+    }).catch(function(error) {
+      console.error('Error al cargar el PDF: ', error);
+    });
+  </script>
+</body>
+</html>
