@@ -1,237 +1,27 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Visualizador de PDF con Texto</title>
-  <!-- Íconos de Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      margin: 0;
-      background-color: #f0f2f5;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
-    .pdf-container {
-      position: relative;
-      width: 90%;
-      max-width: 800px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      overflow: hidden;
-    }
-    #pdf-canvas {
-      display: block;
-      width: 100%;
-    }
-    /* Capa para el texto, encima del canvas */
-    .textLayer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .textLayer > span {
-      position: absolute;
-      white-space: pre;
-      transform-origin: 0 0;
-      color: transparent;
-      -webkit-text-stroke: 0.5px rgba(0,0,0,0.3);
-    }
-    /* Íconos laterales para navegación */
-    .nav-icon {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(0, 0, 0, 0.8); /* Más opaco */
-      color: #fff;
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      z-index: 3;
-      transition: background 0.3s;
-    }
-    .nav-icon:hover {
-      background: rgba(0, 0, 0, 0.9); /* Aún más opaco al pasar el ratón */
-    }
-    .nav-prev {
-      left: 10px;
-    }
-    .nav-next {
-      right: 10px;
-    }
-    @media (max-width: 600px) {
-      .nav-icon {
-        width: 40px;
-        height: 40px;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programación de Conciertos</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
 </head>
 <body>
-  <div class="pdf-container">
-    <canvas id="pdf-canvas"></canvas>
-    <!-- Contenedor para la capa de texto (se generará dinámicamente) -->
-    <div id="text-layer-container"></div>
-    <!-- Íconos para pasar de página -->
-    <div class="nav-icon nav-prev" id="prev-page"><i class="fa-solid fa-angle-left"></i></div>
-    <div class="nav-icon nav-next" id="next-page"><i class="fa-solid fa-angle-right"></i></div>
-  </div>
 
-  <!-- PDF.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js"></script>
-  <!-- Script adicional para la capa de texto -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf_viewer.min.js"></script>
-  
-  <script>
-    // URL del documento PDF
-    var url = 'https://museomaja.com/wp-content/uploads/2025/03/CONCIERTOS.pdf';
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.13.216/pdf.worker.min.js';
+    <iframe src="https://museomaja.com/wp-content/uploads/2025/03/CONCIERTOS.pdf#toolbar=0&navpanes=0&scrollbar=0"></iframe>
 
-    var pdfDoc = null,
-        pageNum = 1,
-        pageRendering = false,
-        pageNumPending = null,
-        scale = 1.5,
-        canvas = document.getElementById('pdf-canvas'),
-        ctx = canvas.getContext('2d');
-
-    // Función que renderiza la página, el canvas y la capa de texto
-    function renderPage(num) {
-      pageRendering = true;
-      pdfDoc.getPage(num).then(function(page) {
-        // Ajustar el scale según el ancho del contenedor
-        var containerWidth = document.querySelector('.pdf-container').clientWidth;
-        var viewport = page.getViewport({ scale: scale });
-        var adjustedScale = containerWidth / viewport.width * scale;
-        viewport = page.getViewport({ scale: adjustedScale });
-
-        // Configurar dimensiones del canvas
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        // Renderizar la página en el canvas
-        var renderContext = {
-          canvasContext: ctx,
-          viewport: viewport
-        };
-        page.render(renderContext).promise.then(function() {
-          pageRendering = false;
-          if (pageNumPending !== null) {
-            renderPage(pageNumPending);
-            pageNumPending = null;
-          }
-        });
-
-        // Eliminar capa de texto antigua (si existe)
-        var oldTextLayer = document.getElementById('text-layer');
-        if (oldTextLayer) {
-          oldTextLayer.remove();
-        }
-
-        // Crear la nueva capa de texto
-        var textLayerDiv = document.createElement("div");
-        textLayerDiv.id = "text-layer";
-        textLayerDiv.className = "textLayer";
-        textLayerDiv.style.height = canvas.height + "px";
-        textLayerDiv.style.width = canvas.width + "px";
-        textLayerDiv.style.top = canvas.offsetTop + "px";
-        textLayerDiv.style.left = canvas.offsetLeft + "px";
-        document.getElementById("text-layer-container").appendChild(textLayerDiv);
-
-        // Obtener el contenido de texto de la página
-        page.getTextContent().then(function(textContent) {
-          // Renderizar la capa de texto
-          pdfjsLib.renderTextLayer({
-            textContent: textContent,
-            container: textLayerDiv,
-            viewport: viewport,
-            textDivs: []
-          });
-        });
-      });
-    }
-
-    function queueRenderPage(num) {
-      if (pageRendering) {
-        pageNumPending = num;
-      } else {
-        renderPage(num);
-      }
-    }
-
-    // Funciones para cambiar de página
-    function onPrevPage() {
-      if (pageNum <= 1) return;
-      pageNum--;
-      queueRenderPage(pageNum);
-    }
-    function onNextPage() {
-      if (pageNum >= pdfDoc.numPages) return;
-      pageNum++;
-      queueRenderPage(pageNum);
-    }
-
-    // Eventos para los íconos laterales
-    document.getElementById('prev-page').addEventListener('click', onPrevPage);
-    document.getElementById('next-page').addEventListener('click', onNextPage);
-
-    // Detección de gestos (swipe) en dispositivos táctiles
-    let startX = 0, endX = 0, threshold = 50;
-    canvas.addEventListener('touchstart', function(event) {
-      startX = event.changedTouches[0].screenX;
-    });
-    canvas.addEventListener('touchend', function(event) {
-      endX = event.changedTouches[0].screenX;
-      if (endX < startX - threshold) {
-        onNextPage();
-      } else if (endX > startX + threshold) {
-        onPrevPage();
-      }
-    });
-
-    // Detección de arrastre con ratón para escritorio
-    let mouseDownX = 0;
-    canvas.addEventListener('mousedown', function(event) {
-      mouseDownX = event.screenX;
-    });
-    canvas.addEventListener('mouseup', function(event) {
-      let mouseUpX = event.screenX;
-      if (mouseUpX < mouseDownX - threshold) {
-        onNextPage();
-      } else if (mouseUpX > mouseDownX + threshold) {
-        onPrevPage();
-      }
-    });
-
-    // Cargar el PDF
-    pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {
-      pdfDoc = pdfDoc_;
-      renderPage(pageNum);
-    }).catch(function(error) {
-      console.error('Error al cargar el PDF: ', error);
-    });
-    
-    // Redimensionar la vista cuando cambie el tamaño de la ventana
-    window.addEventListener('resize', function() {
-      queueRenderPage(pageNum);
-    });
-  </script>
 </body>
 </html>
-
